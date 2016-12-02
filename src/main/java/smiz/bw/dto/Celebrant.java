@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 import smiz.bw.model.Person;
 
 /**
- * Created by smiz on 30/11/16.
+ * POJO containing person name and number of days left until his/her birthday.
  */
 @Data
 @NoArgsConstructor

@@ -9,11 +9,17 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 
 /**
- * Created by smiz on 01/12/16.
+ * Service class calculating days left until certain day of certain month.
  */
 @Service
 public class DaysCalculator {
 
+	/**
+	 * Calculates number of days left until specified day of specified month.
+	 * @param month a month until day of which days left are to be calculated
+	 * @param day a day of month specified by corresponding parameter month until which days left are to be calculated
+	 * @return number of days left until specified day of specified month.
+	 */
 	public long getDaysLeftUntil(int month, int day) {
 		LocalDate now = LocalDate.now();
 		LocalDate then = LocalDate.of((month < now.getMonthValue()

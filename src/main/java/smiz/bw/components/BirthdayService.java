@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Created by smiz on 01/12/16.
+ * Class used as Spring Service calculating celebrants of certain month among known persons.
  */
 @Service
 public class BirthdayService {
@@ -25,6 +25,11 @@ public class BirthdayService {
 	@Autowired
 	DaysCalculator daysCalculator;
 
+	/**
+	 * Returns java.util.List of celebrants who have birthdays on month specified, with days left until the birthday of each one.
+	 * @param month month on which persons to be returned must have birthday
+	 * @return List of persons having birthdays in month specified, along with days left until the birthday.
+	 */
 	public List<Celebrant> getCelebrantsForMonth(int month) {
 
 		return personRepository.findByMonthOfBirth(month)

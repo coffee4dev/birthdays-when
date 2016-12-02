@@ -14,43 +14,41 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 /**
- * Created by smiz on 30/11/16.
+ * Class used as Spring REST Controller bean.
+ * Handles requests, stores results and evicts obsolete ones.
  */
 @RestController
 @Slf4j
 public class BirthdaysController {
 
 	private static final String FIELD_PROC_ID = "procId";
-	private static final String FIELD_STATUS = "status";
-	private static final String FIELD_PERSONS = "persons";
 
-	public static final int ONE_SECOND_IN_MSEC = 1000;
-	public static final int THREAD_SLEEP_SEC = 5 * ONE_SECOND_IN_MSEC;
-	public static final int RESULT_EVICTION_TIMEOUT_SEC = 15;
+	private static final int ONE_SECOND_IN_MSEC = 1000;
+	private static final int THREAD_SLEEP_SEC = 5 * ONE_SECOND_IN_MSEC;
+	private static final int RESULT_EVICTION_TIMEOUT_SEC = 15;
 
-	@Autowired
-	private PersonRepository personRepository;
-
-	@Autowired
 	private BirthdayService birthdayService;
 
-	private final ConcurrentMap<Long, Result> results = new ConcurrentHashMap<>();
-
-	private final AtomicLong procCounter = new AtomicLong();
-
-	@Autowired
 	private TaskExecutor taskExecutor;
 
+	private final ConcurrentMap<Long, Result> results = new ConcurrentHashMap<>();
+	private final AtomicLong procCounter = new AtomicLong();
+
+	public BirthdaysController(BirthdayService birthdayService, TaskExecutor taskExecutor) {
+		this.birthdayService = birthdayService;
+		this.taskExecutor = taskExecutor;
+	}
+
+	/**
+	 * Goes through all results stored and removes ones that are obsolete.
+	 */
 	@Scheduled(fixedRate = RESULT_EVICTION_TIMEOUT_SEC * ONE_SECOND_IN_MSEC)
 	public void evictObsoleteResults() {
 		log.debug("Obsolete results eviction started");
@@ -66,6 +64,12 @@ public class BirthdaysController {
 		log.debug("Evicted {} obsolete results", count[0]);
 	}
 
+	/**
+	 * Handles initial request to get users who have birthdays in a month specified.
+	 * @param month a month in which users to be returned are having birthdays; if none is specified, current month is assumed.
+	 * @return java.util.Map containing single pair: key is a constant string field identifier,
+	 * 		and value is an identificator of a process by which result is to be retrieved later.
+	 */
 	@RequestMapping("/birthdays")
 	public Map<String, Object> getByMonth(@RequestParam(value = "m", required = false) final Integer month) {
 
@@ -93,6 +97,17 @@ public class BirthdaysController {
 		return Collections.singletonMap(FIELD_PROC_ID, procId);
 	}
 
+	/**
+	 * Handles request for result of processing specified by process Id.
+	 * @param procId Id of a process result of which is to be retrieved.
+	 * @return Result object containing status of processing and java.util.Jist of celebrants,
+	 * 		depending on the status:
+	 * 	<ul>
+	 * 		<li>if status is "pending", celebrants list is empty</li>
+	 * 		<li>if status is "done", celebrants list is populated with persons who have birthdays in month specified
+	 * 				when an initial request was made</li>
+	 * 	</ul>
+	 */
 	@RequestMapping("/birthdays/{procId}")
 	public Result getResult(@PathVariable Long procId) {
 		Result result = results.get(procId);
@@ -106,8 +121,7 @@ public class BirthdaysController {
 	}
 
 	@ResponseStatus(value = HttpStatus.NOT_FOUND)
-	public class ResourceNotFoundException extends RuntimeException {
-
+	private class ResourceNotFoundException extends RuntimeException {
 	}
 
 }

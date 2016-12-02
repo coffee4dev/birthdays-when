@@ -10,7 +10,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Created by smiz on 01/12/16.
+ * POJO containing result of birthdays calculation
  */
 @Data
 @NoArgsConstructor

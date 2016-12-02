@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Created by smiz on 01/12/16.
+ * Class used as Spring Service populating business data on app startup.
  */
 @Slf4j
 @Component
