@@ -27,6 +27,8 @@ dependencies {
 	compileOnly 'org.projectlombok:lombok:1.16.10'
 
 	compile 'org.springframework.boot:spring-boot-starter-web'
+	compile 'org.springframework.boot:spring-boot-starter-data-jpa'
+	compile 'com.h2database:h2'
 
 	testCompile 'org.springframework.boot:spring-boot-starter-test'
 	testCompile 'junit:junit:4.12'
