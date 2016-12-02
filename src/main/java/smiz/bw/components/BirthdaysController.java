@@ -10,6 +10,8 @@ import smiz.bw.dto.Celebrant;
 import smiz.bw.dto.Result;
 import smiz.bw.repo.PersonRepository;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.HashMap;
@@ -31,7 +33,10 @@ public class BirthdaysController {
 	private static final String FIELD_PROC_ID = "procId";
 	private static final String FIELD_STATUS = "status";
 	private static final String FIELD_PERSONS = "persons";
-	public static final int ONE_SECOND = 1000;
+
+	public static final int ONE_SECOND_IN_MSEC = 1000;
+	public static final int THREAD_SLEEP_SEC = 5 * ONE_SECOND_IN_MSEC;
+	public static final int RESULT_EVICTION_TIMEOUT_SEC = 15;
 
 	@Autowired
 	private PersonRepository personRepository;
@@ -46,9 +51,19 @@ public class BirthdaysController {
 	@Autowired
 	private TaskExecutor taskExecutor;
 
-	@Scheduled(fixedRate = 60 * ONE_SECOND)
+	@Scheduled(fixedRate = RESULT_EVICTION_TIMEOUT_SEC * ONE_SECOND_IN_MSEC)
 	public void evictObsoleteResults() {
+		log.debug("Obsolete results eviction started");
+		final int[] count = new int[]{0};
 
+		final Instant now = Instant.now();
+		results.keySet().removeIf(procId -> {
+			boolean evict = Duration.between(results.get(procId).getCreatedAt(), now).getSeconds() > RESULT_EVICTION_TIMEOUT_SEC;
+			count[0] += evict ? 1 : 0;
+			return evict;
+		});
+
+		log.debug("Evicted {} obsolete results", count[0]);
 	}
 
 	@RequestMapping("/birthdays")
@@ -65,7 +80,7 @@ public class BirthdaysController {
 			List<Celebrant> celebrants = birthdayService.getCelebrantsForMonth(m);
 
 			try {
-				Thread.sleep(2 * ONE_SECOND);
+				Thread.sleep(THREAD_SLEEP_SEC);
 			} catch (InterruptedException e) {
 				log.warn("Process {}: execution interrupted", procId);
 			} finally {
@@ -88,24 +103,6 @@ public class BirthdaysController {
 			results.remove(procId);
 		}
 		return result;
-	}
-
-	/**
-	 * TODO test purposes, remove
-	 * @return
-	 */
-	@RequestMapping("/birthdays/all")
-	public List<Map<String, Object>> getAll() {
-		return StreamSupport.stream(personRepository.findAll().spliterator(), true)
-				.map(p ->  {
-					Map<String, Object> map = new HashMap<>();
-					map.put("name", p.getName());
-					map.put("mob", p.getMonthOfBirth());
-					map.put("dob", p.getDayOfBirth());
-
-					return map;
-				})
-				.collect(Collectors.toList());
 	}
 
 	@ResponseStatus(value = HttpStatus.NOT_FOUND)
