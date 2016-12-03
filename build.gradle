@@ -10,8 +10,9 @@ buildscript {
 apply plugin: 'java'
 apply plugin: 'idea'
 apply plugin: 'org.springframework.boot'
+apply plugin: 'war'
 
-jar {
+war {
 	baseName = 'birthdays-when'
 	version =  '0.1-SNAPSHOT'
 }
